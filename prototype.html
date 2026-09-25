@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAP PIMPINAN - Kab. Mamuju Tengah</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease-out forwards; }
+        
+        .modal { display: none; }
+        .modal.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounceIn { animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; color: black; }
+            .no-print, header, footer, .toast-container, .modal:not(#printModal) { display: none !important; }
+            #printModal { display: block !important; position: static; background: white; }
+            #printModal .no-print-modal { display: none !important; }
+            .print-only { display: block !important; }
+            main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+        }
+        .print-only { display: none; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-400 selection:text-slate-900">
+
+    <div id="toast" class="fixed top-24 right-5 z-[100] flex items-center space-x-3 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl border border-amber-400 transition-all duration-300 transform translate-x-full opacity-0 no-print">
+        <i data-lucide="check-circle" class="w-5 h-5 text-amber-400"></i>
+        <span id="toast-msg" class="text-sm font-semibold">Berhasil!</span>
+        <button aria-label="Tutup notifikasi" onclick="hideToast()" class="text-slate-400 hover:text-white ml-2">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+
+    <header id="main-header" class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm no-print transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('landing')">
+                    <div class="bg-amber-500 text-slate-950 p-2.5 rounded-xl font-black text-xl shadow-inner flex items-center justify-center tracking-tighter">SP</div>
+                    <div>
+                        <h1 class="text-xl font-black tracking-tight text-slate-900 leading-none">SIAP PIMPINAN</h1>
+                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Kab. Mamuju Tengah</p>
+                    </div>
+                </div>
+
+                <nav id="desktop-nav" class="hidden md:flex space-x-1 lg:space-x-2 items-center">
+                    <!-- Dinamis via JS -->
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    <div class="relative hidden sm:block" id="notif-container">
+                        <button aria-label="Notifikasi" onclick="toggleNotif()" class="relative p-2 text-slate-500 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-colors">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            <span id="notif-badge" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping hidden"></span>
+                        </button>
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl py-3 z-50 text-slate-800">
+                            <div class="px-4 pb-2 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="font-bold text-sm">Notifikasi</h3>
+                                <button onclick="clearNotifs()" class="text-[11px] text-amber-600 hover:underline">Tandai Dibaca</button>
+                            </div>
+                            <div id="notif-list" class="max-h-72 overflow-y-auto px-2 py-2">
+                                <p class="text-xs text-center text-slate-500 py-4">Belum ada notifikasi baru.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="auth-login-btn">
+                        <button onclick="navigateTo('login')" class="bg-slate-900 text-white hover:bg-slate-800 px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all">
+                            Login Portal
+                        </button>
+                    </div>
+
+                    <div id="auth-user-menu" class="relative group hidden">
+                        <button class="flex items-center space-x-2 bg-slate-50 border border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-xs px-2 py-1.5 rounded-xl transition-all">
+                            <div id="header-avatar" class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-[10px] shadow-sm">AD</div>
+                            <div class="text-left hidden lg:block">
+                                <p id="header-role-name" class="font-bold text-slate-700 leading-none">Admin</p>
+                                <p id="header-user-name" class="text-[9px] text-slate-500 mt-0.5 truncate max-w-[100px]">User</p>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl py-2 hidden group-hover:block z-50 text-sm">
+                            <div class="px-4 py-2 border-b border-slate-100 mb-1">
+                                <p class="text-[10px] uppercase font-bold text-slate-400 mb-2">Simulasi Ganti Akses</p>
+                                <div class="space-y-1">
+                                    <button onclick="switchRole('ADMINISTRATOR')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-lg text-slate-700 font-medium text-xs">Administrator / Protokol</button>
+                                    <button onclick="switchRole('OPD')" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-lg text-slate-700 font-medium text-xs">Instansi OPD (Pengaju)</button>
+                                    <div class="border-t border-slate-100 my-1"></div>
+                                    <button onclick="switchRole('BUPATI')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 rounded-lg font-bold text-xs"><i data-lucide="award" class="w-3 h-3 inline mr-1"></i> Bupati</button>
+                                    <button onclick="switchRole('WAKIL_BUPATI')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 rounded-lg font-bold text-xs"><i data-lucide="award" class="w-3 h-3 inline mr-1"></i> Wakil Bupati</button>
+                                    <button onclick="switchRole('SEKDA')" class="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-amber-700 rounded-lg font-bold text-xs"><i data-lucide="award" class="w-3 h-3 inline mr-1"></i> Sekretaris Daerah</button>
+                                </div>
+                            </div>
+                            <button onclick="logout()" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-bold flex items-center gap-2">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                            </button>
+                        </div>
+                    </div>
+
+                    <button aria-label="Buka menu navigasi" onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-xl">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-100 bg-white absolute w-full shadow-xl">
+            <div class="px-4 pt-2 pb-6 space-y-1" id="mobile-nav">
+                <!-- Dinamis via JS -->
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full">
+        
+        <!-- Halaman Beranda -->
+        <div id="view-landing" class="view-section active">
+            <div class="relative bg-slate-900 text-white overflow-hidden">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-amber-400 via-transparent to-transparent"></div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 relative z-10 flex flex-col items-center text-center">
+                    <div class="inline-flex bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider mb-6 shadow-sm">
+                        KABUPATEN MAMUJU TENGAH
+                    </div>
+                    <h1 class="text-4xl sm:text-5xl lg:text-7xl font-black leading-tight tracking-tight max-w-4xl">
+                        Sistem Integrasi <br/><span class="text-amber-400">Agenda Pimpinan</span>
+                    </h1>
+                    <p class="mt-6 text-slate-300 text-lg sm:text-xl max-w-2xl leading-relaxed font-light">
+                        Portal layanan publik untuk pengajuan dan sinkronisasi jadwal kegiatan Bupati, Wakil Bupati, serta Sekretaris Daerah.
+                    </p>
+                    <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center w-full">
+                        <button onclick="handleAjukanClick()" class="bg-amber-500 text-slate-900 font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 shadow-xl transition-transform hover:-translate-y-1">
+                            <i data-lucide="calendar-plus" class="w-5 h-5"></i> Ajukan Permohonan (OPD)
+                        </button>
+                        <button onclick="navigateTo('tracking')" class="bg-white/10 text-white border border-white/20 font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white/20 shadow-lg backdrop-blur-sm transition-transform hover:-translate-y-1">
+                            <i data-lucide="search" class="w-5 h-5 text-amber-400"></i> Lacak Status Agenda
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-black text-slate-900">Transparansi & Kepastian</h2>
+                    <p class="text-slate-500 mt-4 max-w-2xl mx-auto">Memastikan setiap undangan terdistribusi dan dikonfirmasi langsung oleh pimpinan daerah.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                        <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
+                            <i data-lucide="send" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Pengajuan 1 Pintu</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">OPD dapat mengajukan permohonan yang akan diteruskan langsung ke akun Pimpinan yang dituju.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                        <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-600">
+                            <i data-lucide="check-circle" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Konfirmasi Mandiri</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">Pimpinan daerah mengonfirmasi atau mendelegasikan agenda secara mandiri melalui portal eksekutif.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                        <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-emerald-600">
+                            <i data-lucide="search" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Pelacakan Terbuka</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">Status permohonan dapat dipantau langsung kapanpun menggunakan ID Registrasi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman Login -->
+        <div id="view-login" class="view-section py-20 px-4">
+            <div class="max-w-md mx-auto bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-2xl">
+                <div class="text-center space-y-2 mb-8">
+                    <div class="bg-amber-500 text-slate-900 font-black p-4 rounded-2xl text-3xl inline-block mb-3 shadow-sm">SP</div>
+                    <h2 class="text-2xl font-black text-slate-900">Portal Login</h2>
+                    <p class="text-slate-500 text-sm">Masuk sesuai dengan kewenangan Anda.</p>
+                </div>
+                <div class="space-y-5">
+                    <div>
+                        <label for="login-role" class="text-xs font-bold text-slate-700 mb-2 block uppercase tracking-wider">Pilih Hak Akses (Simulasi)</label>
+                        <select id="login-role" class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl px-4 py-3.5 font-semibold focus:outline-none focus:border-amber-500 transition">
+                            <option value="OPD">Instansi / OPD (Pengaju)</option>
+                            <option value="ADMINISTRATOR">Administrator / Protokol</option>
+                            <option value="BUPATI">Bupati Mamuju Tengah</option>
+                            <option value="WAKIL_BUPATI">Wakil Bupati</option>
+                            <option value="SEKDA">Sekretaris Daerah</option>
+                        </select>
+                    </div>
+                    <button onclick="handleLogin()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 shadow-lg transition-all uppercase tracking-wider text-sm flex justify-center items-center gap-2">
+                        Masuk Sistem <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman Dashboard -->
+        <div id="view-dashboard" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
+            <div class="bg-slate-900 text-white p-8 lg:p-10 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 opacity-10">
+                    <i data-lucide="layers" class="w-64 h-64"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-amber-400/30">DASHBOARD</span>
+                        <span class="text-sm text-slate-400 font-medium">26 September 2026</span>
+                    </div>
+                    <h2 class="text-3xl lg:text-4xl font-black mb-2" id="dash-greeting">Selamat Datang</h2>
+                    <p class="text-sm lg:text-base text-slate-300">Ringkasan status permohonan dan jadwal kegiatan.</p>
+                </div>
+                <div class="relative z-10">
+                     <button id="dash-btn-ajukan" onclick="navigateTo('permohonan')" class="bg-amber-500 text-slate-900 font-bold px-6 py-3.5 rounded-xl text-sm flex items-center gap-2 hover:bg-amber-400 hover:shadow-lg transition-all hidden">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Registrasi Agenda Baru
+                    </button>
+                </div>
+            </div>
+
+            <div id="dash-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6"></div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 lg:p-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-slate-100 pb-4">
+                    <h3 class="font-black text-xl text-slate-900 flex items-center gap-2">
+                        <i data-lucide="clock" class="w-6 h-6 text-amber-500"></i> Agenda Terkonfirmasi (26 Sep)
+                    </h3>
+                    <button onclick="navigateTo('calendar')" class="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
+                        Buka Kalender Penuh <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="dash-timeline" class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8"></div>
+            </div>
+        </div>
+
+        <!-- Halaman Kalender -->
+        <div id="view-calendar" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900">Kalender Integrasi</h2>
+                    <p class="text-sm text-slate-500 mt-1">Pemantauan visual jadwal terkonfirmasi lintas pimpinan.</p>
+                </div>
+                <div class="flex gap-3 w-full sm:w-auto">
+                    <select aria-label="Filter Pimpinan" id="cal-filter" onchange="renderCalendar()" class="flex-1 sm:flex-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:border-amber-500">
+                        <option value="ALL">Semua Pimpinan</option>
+                        <option value="Bupati">Bupati Mamuju Tengah</option>
+                        <option value="Wakil Bupati">Wakil Bupati</option>
+                        <option value="Sekretaris Daerah">Sekretaris Daerah</option>
+                    </select>
+                    <button aria-label="Cetak Kalender" onclick="openPrintModal()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Cetak
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 shadow-sm overflow-x-auto">
+                <div class="text-center font-black text-2xl mb-6 uppercase text-slate-800">September 2026</div>
+                <div class="min-w-[700px]">
+                    <div class="grid grid-cols-7 gap-3 text-center text-sm font-bold text-slate-400 mb-3 border-b border-slate-100 pb-3 uppercase">
+                        <div>Senin</div><div>Selasa</div><div>Rabu</div><div>Kamis</div><div>Jumat</div><div>Sabtu</div><div>Minggu</div>
+                    </div>
+                    <div id="cal-grid" class="grid grid-cols-7 gap-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman Form Permohonan (Khusus OPD/Admin) -->
+        <div id="view-permohonan" class="view-section max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-12 space-y-8">
+            <div class="text-center mb-8">
+                <span class="text-amber-500 text-xs font-bold uppercase tracking-widest">Akses Instansi / OPD</span>
+                <h2 class="text-3xl font-black text-slate-900 mt-2">Formulir Pengajuan Agenda</h2>
+                <p class="text-slate-500 mt-2">Permohonan akan diteruskan langsung ke akun Pimpinan Daerah yang dipilih untuk dikonfirmasi.</p>
+            </div>
+
+            <form id="form-permohonan" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-lg space-y-8 relative overflow-hidden" onsubmit="submitPermohonan(event)">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div class="md:col-span-2">
+                        <label for="f_kegiatan" class="font-bold text-slate-800 mb-2 block">Nama Kegiatan / Acara <span class="text-red-500">*</span></label>
+                        <input required type="text" id="f_kegiatan" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" placeholder="Cth: Rapat Koordinasi Teknis Perencanaan Pembangunan">
+                    </div>
+                    <div>
+                        <label for="f_pengundang" class="font-bold text-slate-800 mb-2 block">Instansi / Penyelenggara <span class="text-red-500">*</span></label>
+                        <input required type="text" id="f_pengundang" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" placeholder="Cth: Bappeda Kab. Mateng">
+                    </div>
+                    <div>
+                        <label for="f_nomor" class="font-bold text-slate-800 mb-2 block">Nomor Surat Undangan Resmi <span class="text-red-500">*</span></label>
+                        <input required type="text" id="f_nomor" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" placeholder="Cth: 005/123/BAPP/2026">
+                    </div>
+                    <div>
+                        <label for="f_pimpinan" class="font-bold text-slate-800 mb-2 block">Tujukan Kepada (Pimpinan) <span class="text-red-500">*</span></label>
+                        <select required id="f_pimpinan" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 font-bold outline-none transition bg-amber-50 text-amber-900">
+                            <option value="">-- Pilih Pimpinan Tujuan --</option>
+                            <option value="Bupati">Bupati Mamuju Tengah</option>
+                            <option value="Wakil Bupati">Wakil Bupati</option>
+                            <option value="Sekretaris Daerah">Sekretaris Daerah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="f_tanggal" class="font-bold text-slate-800 mb-2 block">Tanggal Pelaksanaan <span class="text-red-500">*</span></label>
+                        <input required type="date" id="f_tanggal" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" value="2026-09-26">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="f_mulai" class="font-bold text-slate-800 mb-2 block">Jam Mulai <span class="text-red-500">*</span></label>
+                            <input required type="time" id="f_mulai" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" value="09:00">
+                        </div>
+                        <div>
+                            <label for="f_selesai" class="font-bold text-slate-800 mb-2 block">Jam Selesai <span class="text-red-500">*</span></label>
+                            <input required type="time" id="f_selesai" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" value="11:00">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="f_lokasi" class="font-bold text-slate-800 mb-2 block">Lokasi Lengkap Kegiatan <span class="text-red-500">*</span></label>
+                        <input required type="text" id="f_lokasi" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition" placeholder="Cth: Aula Kantor Bupati, Lantai 2">
+                    </div>
+                    <div class="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <label for="f_cp" class="font-bold text-slate-800 mb-2 block flex items-center gap-2">
+                            <i data-lucide="smartphone" class="w-4 h-4 text-slate-500"></i> Narahubung / CP (WA Aktif) <span class="text-red-500">*</span>
+                        </label>
+                        <input required type="tel" id="f_cp" placeholder="Cth: 081234567890" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-amber-500 outline-none transition bg-white">
+                    </div>
+                </div>
+                <div class="border-t border-slate-100 pt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                    <button type="button" onclick="navigateTo('dashboard')" class="px-6 py-3.5 rounded-xl bg-white border border-slate-300 font-bold text-sm text-slate-700 hover:bg-slate-50 transition">Batal</button>
+                    <button type="submit" class="px-8 py-3.5 rounded-xl bg-amber-500 font-bold text-sm text-slate-900 hover:bg-amber-400 shadow-md transition flex justify-center items-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i> Ajukan ke Pimpinan
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Halaman Database / Verifikasi (Admin) -->
+        <div id="view-database" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-6">
+                <div>
+                    <h2 id="db-title" class="text-3xl font-black text-slate-900">Database Agenda</h2>
+                    <p id="db-desc" class="text-sm text-slate-500 mt-1">Arsip dan pengolahan seluruh data agenda pimpinan daerah.</p>
+                </div>
+                <div id="db-controls" class="flex flex-col sm:flex-row w-full md:w-auto gap-3">
+                    <div class="relative w-full sm:w-72">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-4 top-3.5 text-slate-400"></i>
+                        <input aria-label="Cari data" type="text" id="db-search" placeholder="Cari nama kegiatan..." onkeyup="renderDatabase()" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-amber-500">
+                    </div>
+                    <button aria-label="Cetak Laporan" onclick="openPrintModal()" class="bg-slate-900 text-white px-5 py-3 rounded-xl text-sm font-bold flex justify-center items-center gap-2 hover:bg-slate-800 transition">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Cetak Laporan
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-xs border-b border-slate-200">
+                            <tr>
+                                <th class="p-5">Reg ID / Jadwal</th>
+                                <th class="p-5">Kegiatan & Lokasi</th>
+                                <th class="p-5">Pimpinan / Delegasi</th>
+                                <th class="p-5">Status</th>
+                                <th class="p-5 text-center">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman Portal Eksekutif (Khusus Bupati, Wabup, Sekda) -->
+        <div id="view-exec" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8">
+            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                <i data-lucide="award" class="absolute right-6 top-6 w-32 h-32 text-white/5 border-0 hidden md:block"></i>
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+                    <div class="w-20 h-20 bg-white/10 rounded-3xl border border-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-black text-amber-400">
+                        <span id="exec-avatar-text">P</span>
+                    </div>
+                    <div>
+                        <span class="inline-block bg-amber-500 text-slate-900 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2 shadow-sm">Portal Pengambilan Keputusan</span>
+                        <h2 id="exec-name" class="text-3xl lg:text-4xl font-black mb-1">Nama Pejabat</h2>
+                        <p id="exec-role" class="text-slate-300 text-base font-medium">Jabatan</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Kolom Kiri: INBOX Permohonan Masuk -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm h-full">
+                        <h3 class="text-xl font-black text-slate-900 flex items-center gap-3 mb-6">
+                            <span class="bg-amber-100 text-amber-600 p-2 rounded-xl"><i data-lucide="inbox" class="w-5 h-5"></i></span> 
+                            Menunggu Konfirmasi
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-6">Daftar agenda yang ditujukan kepada Anda untuk segera dikonfirmasi hadir atau didelegasikan.</p>
+                        
+                        <div id="exec-pending-list" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                            <!-- Injeksi JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kolom Kanan: Jadwal Terkonfirmasi -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200 shadow-sm h-full">
+                        <div class="border-b border-slate-100 pb-5 mb-6 flex justify-between items-center">
+                            <h3 class="text-xl font-black text-slate-900 flex items-center gap-3">
+                                <span class="bg-emerald-100 text-emerald-600 p-2 rounded-xl"><i data-lucide="check-square" class="w-5 h-5"></i></span> 
+                                Jadwal Anda Hari Ini
+                            </h3>
+                            <span class="text-sm font-bold text-slate-500">26 Sep 2026</span>
+                        </div>
+                        <div id="exec-agenda-list" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <!-- Injeksi JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Halaman Tracking / Lacak -->
+        <div id="view-tracking" class="view-section max-w-3xl mx-auto px-4 sm:px-6 py-12 lg:py-20 space-y-8">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black text-slate-900">Lacak Status Permohonan</h2>
+                <p class="text-base text-slate-500 mt-3">Masukkan nomor registrasi (Reg ID) untuk melihat status konfirmasi dari Pimpinan.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-3xl shadow-lg border border-slate-100">
+                <input aria-label="Masukkan ID" type="text" id="track-input" placeholder="Contoh: AGD-2026-0098" pattern="AGD-[0-9]{4}-[0-9]{4}" title="Format ID: AGD-YYYY-NNNN" class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-mono font-bold focus:border-amber-500 outline-none text-center sm:text-left">
+                <button aria-label="Cari" onclick="doTrack()" class="bg-amber-500 text-slate-900 px-8 py-4 rounded-2xl font-black shadow-md hover:bg-amber-400 flex justify-center items-center gap-2">
+                    <i data-lucide="search" class="w-5 h-5"></i> CARI DATA
+                </button>
+            </div>
+            <div id="track-result" class="mt-8 transition-all"></div>
+        </div>
+        
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-slate-900 text-white p-2 rounded-lg font-black text-sm">SP</div>
+                    <p class="text-sm font-bold text-slate-700">SIAP PIMPINAN - Kab. Mamuju Tengah</p>
+                </div>
+                <p class="text-xs text-slate-500 font-medium">&copy; 2026 Bagian Protokol dan Komunikasi Pimpinan Setda.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal: Detail -->
+    <div id="modal-detail" class="modal fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 sm:p-8 animate-bounceIn border border-slate-100">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span id="dtl-id" class="text-[11px] bg-slate-100 px-3 py-1 rounded-full font-mono font-bold text-slate-600 border">ID</span>
+                    <h3 id="dtl-kegiatan" class="font-black text-xl text-slate-900 mt-4 leading-snug">Kegiatan</h3>
+                </div>
+                <button aria-label="Tutup" onclick="closeModal('modal-detail')" class="bg-slate-50 p-2.5 rounded-full hover:bg-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4 text-sm text-slate-700 bg-slate-50 p-5 rounded-2xl border border-slate-100" id="dtl-content"></div>
+            <div class="mt-8 flex flex-col sm:flex-row gap-3">
+                <button id="btn-wa" class="flex-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold py-3 rounded-xl text-sm flex justify-center items-center gap-2 hover:bg-emerald-100"><i data-lucide="phone" class="w-4 h-4"></i> Hubungi Kontak</button>
+                <button onclick="closeModal('modal-detail')" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-800">Tutup Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Delegate -->
+    <div id="modal-delegate" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-3xl p-8 animate-bounceIn shadow-2xl">
+            <h3 class="font-black text-xl mb-6 flex items-center gap-3 text-slate-900">
+                <span class="bg-blue-50 text-blue-600 p-2 rounded-xl"><i data-lucide="share-2" class="w-5 h-5"></i></span> 
+                Formulir Delegasi
+            </h3>
+            <div class="space-y-5">
+                <p class="text-sm text-slate-600 mb-2">Pilih pimpinan lain untuk menghadiri agenda ini menggantikan Anda.</p>
+                <div>
+                    <label for="del-target" class="text-sm font-bold block mb-2 text-slate-700">Tugaskan Kepada:</label>
+                    <select id="del-target" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm outline-none font-bold focus:border-blue-500 bg-white">
+                        <option value="Wakil Bupati">Wakil Bupati</option>
+                        <option value="Sekretaris Daerah">Sekretaris Daerah</option>
+                        <option value="Asisten I Bid. Pemerintahan">Asisten I Bid. Pemerintahan</option>
+                        <option value="Asisten II Bid. Perekonomian">Asisten II Bid. Perekonomian</option>
+                        <option value="Asisten III Bid. Administrasi Umum">Asisten III Bid. Administrasi Umum</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="del-reason" class="text-sm font-bold block mb-2 text-slate-700">Catatan Disposisi (Opsional):</label>
+                    <textarea id="del-reason" rows="3" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 resize-none" placeholder="Tuliskan alasan/instruksi..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4 border-t border-slate-100">
+                    <button onclick="closeModal('modal-delegate')" class="flex-1 bg-white border border-slate-300 text-slate-700 font-bold py-3 rounded-xl text-sm hover:bg-slate-50">Batal</button>
+                    <button onclick="executeDelegation()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow hover:bg-blue-700">Konfirmasi Disposisi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Print Preview -->
+    <div id="printModal" class="modal fixed inset-0 z-[120] bg-white text-black overflow-y-auto print-only">
+        <div class="max-w-5xl mx-auto p-8 sm:p-12 relative print:p-0 bg-white min-h-screen">
+            <div class="flex justify-between items-center mb-10 border-b border-slate-200 pb-6 no-print-modal bg-slate-50 p-6 rounded-3xl">
+                <div>
+                    <h2 class="font-black text-2xl text-slate-900">Pratinjau Dokumen Cetak</h2>
+                </div>
+                <div class="flex gap-3">
+                    <button aria-label="Tutup" onclick="closeModal('printModal')" class="px-5 py-3 bg-white border border-slate-300 rounded-xl font-bold text-sm">Tutup</button>
+                    <button aria-label="Cetak" onclick="window.print()" class="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Cetak Sekarang</button>
+                </div>
+            </div>
+            
+            <div class="border-b-[3px] border-black pb-5 mb-8 text-center flex flex-col items-center">
+                <h1 class="font-serif font-bold text-3xl uppercase tracking-widest leading-tight">Pemerintah Kabupaten Mamuju Tengah</h1>
+                <h2 class="font-serif font-bold text-xl uppercase mt-1">Sekretariat Daerah</h2>
+                <p class="font-serif text-sm mt-2">Bagian Protokol dan Komunikasi Pimpinan</p>
+                <p class="font-serif text-xs italic mt-1 text-gray-700">Jl. Tammauni Pue Ballung, Benteng, Tobadak, Kab. Mamuju Tengah, Kode Pos: 91562</p>
+            </div>
+            <div class="text-center mb-8">
+                <h3 class="font-bold uppercase text-xl inline-block border-b border-black pb-1">Lembar Jadwal Harian Pimpinan</h3>
+                <p class="text-sm font-semibold mt-3">Hari / Tanggal: <span id="print-date">26 September 2026</span></p>
+            </div>
+            <table class="w-full border-collapse border border-black text-sm text-left">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-black p-3 w-12 text-center font-bold">No</th>
+                        <th class="border border-black p-3 w-32 font-bold text-center">Waktu (WITA)</th>
+                        <th class="border border-black p-3 font-bold">Uraian Kegiatan / Tempat</th>
+                        <th class="border border-black p-3 w-40 font-bold">Kehadiran</th>
+                        <th class="border border-black p-3 w-32 font-bold text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="print-tbody"></tbody>
+            </table>
+            <div class="mt-20 flex justify-end">
+                <div class="text-center">
+                    <p class="text-sm">Tobadak, 25 September 2026</p>
+                    <p class="font-bold text-sm mb-24 mt-1">Kepala Bagian Protokol & Kompim,</p>
+                    <p class="font-bold underline text-sm">( ___________________________ )</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const INITIAL_AGENDAS = [
+            {
+                id: "AGD-2026-0098", nomorSurat: "050/124/BAPPEDA/IX/2026", tanggalSurat: "2026-09-24",
+                pengundang: "Bappeda Kabupaten Mamuju Tengah", kegiatan: "Pembukaan Forum Perangkat Daerah",
+                tanggal: "2026-09-26", jamMulai: "09:00", jamSelesai: "11:00", lokasi: "Ruang Pola Kantor Bupati",
+                pimpinan: "Bupati", jenis: "Rapat / Forum", cp: "Drs. Ahmad Ridwan (081245678901)",
+                status: "MENUNGGU_KONFIRMASI", delegatedTo: null, alasanDelegasi: "",
+                riwayat: [{ waktu: "2026-09-24 10:15", pesan: "Permohonan dikirim oleh Bappeda, menunggu konfirmasi Bupati." }]
+            },
+            {
+                id: "AGD-2026-0092", nomorSurat: "005/312/DPRD/IX/2026", tanggalSurat: "2026-09-22",
+                pengundang: "DPRD Kabupaten Mamuju Tengah", kegiatan: "Rapat Paripurna DPRD Pembahasan Ranperda",
+                tanggal: "2026-09-26", jamMulai: "09:30", jamSelesai: "12:00", lokasi: "Ruang Sidang Utama DPRD Mateng",
+                pimpinan: "Bupati", jenis: "Rapat Paripurna", cp: "Sekretariat DPRD (082199887766)",
+                status: "TERKONFIRMASI", delegatedTo: null, alasanDelegasi: "",
+                riwayat: [{ waktu: "2026-09-22 14:00", pesan: "Permohonan dikirim oleh Sekwan DPRD." }, { waktu: "2026-09-23 09:10", pesan: "Dikonfirmasi hadir oleh Bupati." }]
+            },
+            {
+                id: "AGD-2026-0085", nomorSurat: "800/089/BKPSDM/IX/2026", tanggalSurat: "2026-09-20",
+                pengundang: "BKPSDM Kabupaten Mamuju Tengah", kegiatan: "Pembukaan Pelatihan Kepemimpinan Pengawas",
+                tanggal: "2026-09-26", jamMulai: "13:30", jamSelesai: "15:30", lokasi: "Aula Lantik Kantor Bupati",
+                pimpinan: "Wakil Bupati", jenis: "Seremonial", cp: "Kabid Pengembangan (085241112233)",
+                status: "MENUNGGU_KONFIRMASI", delegatedTo: null, alasanDelegasi: "",
+                riwayat: [{ waktu: "2026-09-20 11:00", pesan: "Permohonan dibuat, masuk ke kotak masuk Wakil Bupati." }]
+            }
+        ];
+
+        let state = {
+            view: 'landing',
+            user: null, // Visitor by default
+            agendas: [],
+            isMobileMenuOpen: false,
+            selectedAgenda: null
+        };
+
+        function initApp() {
+            try {
+                const saved = localStorage.getItem('siap_pimpinan_v3');
+                state.agendas = saved ? JSON.parse(saved) : [...INITIAL_AGENDAS];
+            } catch(e) {
+                state.agendas = [...INITIAL_AGENDAS];
+            }
+            lucide.createIcons();
+            updateNav();
+            updateAuthUI();
+        }
+        
+        function saveAgendas() {
+            localStorage.setItem('siap_pimpinan_v3', JSON.stringify(state.agendas));
+        }
+
+        function navigateTo(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            
+            // Cek akses untuk menu Pengajuan
+            if(viewId === 'permohonan') {
+                if(!state.user || !['ADMINISTRATOR', 'PROTOKOL', 'OPD'].includes(state.user.role)) {
+                    showToast("Maaf, hak akses Anda tidak diizinkan untuk membuat pengajuan baru.");
+                    viewId = state.user ? 'dashboard' : 'landing'; // Fallback
+                }
+            }
+
+            const protectedViews = ['dashboard', 'verifikasi', 'exec', 'database'];
+            if(protectedViews.includes(viewId) && !state.user) {
+                viewId = 'login';
+                showToast("Silakan login untuk mengakses sistem.");
+            }
+
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            state.view = viewId;
+            
+            if(state.isMobileMenuOpen) toggleMobileMenu();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            updateNav(); 
+            
+            if(viewId === 'dashboard') renderDashboard();
+            if(viewId === 'database' || viewId === 'verifikasi') renderDatabase(viewId);
+            if(viewId === 'calendar') renderCalendar();
+            if(viewId === 'exec') renderExecPortal();
+
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        function handleAjukanClick() {
+            if(!state.user) {
+                showToast("Silakan login sebagai OPD/Instansi untuk mengajukan permohonan.");
+                navigateTo('login');
+            } else if (['ADMINISTRATOR', 'PROTOKOL', 'OPD'].includes(state.user.role)) {
+                navigateTo('permohonan');
+            } else {
+                showToast("Hak akses Pimpinan tidak diperuntukkan untuk membuat pengajuan.");
+            }
+        }
+
+        function handleLogin() {
+            const role = document.getElementById('login-role').value;
+            switchRole(role);
+            navigateTo(role === 'BUPATI' || role === 'WAKIL_BUPATI' || role === 'SEKDA' ? 'exec' : 'dashboard');
+        }
+
+        function logout() {
+            state.user = null;
+            updateAuthUI();
+            updateNav();
+            navigateTo('landing');
+            showToast("Anda telah keluar dari sistem.");
+        }
+
+        function switchRole(role) {
+            const roles = {
+                'PROTOKOL': { name: "Ajudan Utama", roleName: "Petugas Protokol", dept: "Protokol Setda" },
+                'ADMINISTRATOR': { name: "Admin Sistem", roleName: "Administrator", dept: "Protokol Setda" },
+                'BUPATI': { name: "Dr.H.Arsal Aras,S.E.,M.Si", roleName: "Bupati Mamuju Tengah", dept: "Pimpinan Daerah" },
+                'WAKIL_BUPATI': { name: "Dr. H. Askary,S.Sos.,M.Si", roleName: "Wakil Bupati", dept: "Pimpinan Daerah" },
+                'SEKDA': { name: "Litha Febriani,S.E.,M.Si", roleName: "Sekretaris Daerah", dept: "Sekretariat Daerah" },
+                'OPD': { name: "Kepala OPD", roleName: "Pengguna OPD", dept: "Instansi Pengundang" }
+            };
+            state.user = { role, ...roles[role] };
+            
+            updateAuthUI();
+            updateNav();
+            
+            showToast(`Berhasil login sebagai ${state.user.roleName}`);
+            if(['dashboard', 'exec', 'database', 'verifikasi'].includes(state.view)) {
+                navigateTo(state.view);
+            }
+        }
+
+        function updateAuthUI() {
+            const loginBtn = document.getElementById('auth-login-btn');
+            const userMenu = document.getElementById('auth-user-menu');
+            const notifContainer = document.getElementById('notif-container');
+
+            if (state.user) {
+                loginBtn.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                notifContainer.classList.remove('hidden');
+
+                document.getElementById('header-role-name').innerText = state.user.roleName;
+                document.getElementById('header-user-name').innerText = state.user.name;
+                document.getElementById('header-avatar').innerText = state.user.name.substring(0,2).toUpperCase();
+            } else {
+                loginBtn.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+                notifContainer.classList.add('hidden');
+            }
+        }
+
+        let toastTimeout;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.remove('translate-x-full', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(hideToast, 4000);
+        }
+        function hideToast() {
+            document.getElementById('toast').classList.add('translate-x-full', 'opacity-0');
+        }
+
+        function toggleMobileMenu() {
+            state.isMobileMenuOpen = !state.isMobileMenuOpen;
+            const menu = document.getElementById('mobile-menu');
+            if(state.isMobileMenuOpen) menu.classList.remove('hidden');
+            else menu.classList.add('hidden');
+        }
+        function toggleNotif() { document.getElementById('notif-dropdown').classList.toggle('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function updateNav() {
+            const desktopNav = document.getElementById('desktop-nav');
+            const mobileNav = document.getElementById('mobile-nav');
+            
+            let items = [
+                { id: 'landing', label: 'Beranda' },
+                { id: 'tracking', label: 'Lacak Status' },
+                { id: 'calendar', label: 'Kalender' },
+            ];
+
+            if (state.user) {
+                items.splice(1, 0, { id: 'dashboard', label: 'Dashboard' });
+
+                // HANYA OPD dan ADMIN yang bisa lihat menu Pengajuan
+                if (['ADMINISTRATOR', 'PROTOKOL', 'OPD'].includes(state.user.role)) {
+                    items.splice(2, 0, { id: 'permohonan', label: 'Pengajuan Baru' });
+                }
+
+                if (['ADMINISTRATOR', 'PROTOKOL'].includes(state.user.role)) {
+                    const antrean = state.agendas.filter(a=>a.status==='MENUNGGU_KONFIRMASI').length;
+                    items.push({ id: 'verifikasi', label: 'Verifikasi Global', badge: antrean });
+                    items.push({ id: 'database', label: 'Database' });
+                }
+
+                if (['BUPATI', 'WAKIL_BUPATI', 'SEKDA'].includes(state.user.role)) {
+                    const myPimName = state.user.roleName.replace('Mamuju Tengah', '').trim();
+                    const myAntrean = state.agendas.filter(a=> a.pimpinan === myPimName && a.status === 'MENUNGGU_KONFIRMASI').length;
+                    items.push({ id: 'exec', label: 'Portal Eksekutif', badge: myAntrean });
+                }
+            }
+            
+            const renderItem = (item, isMobile) => `
+                <button onclick="navigateTo('${item.id}')" class="${isMobile ? 'w-full text-left px-4 py-3 text-base justify-between' : 'px-4 py-2 text-sm'} rounded-xl font-semibold transition-all flex items-center gap-1.5 ${state.view === item.id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}">
+                    ${item.label}
+                    ${item.badge ? `<span class="bg-amber-500 text-slate-900 text-[10px] px-1.5 py-0.5 rounded-full font-black">${item.badge}</span>` : ''}
+                </button>
+            `;
+
+            desktopNav.innerHTML = items.map(i => renderItem(i, false)).join('');
+            mobileNav.innerHTML = items.map(i => renderItem(i, true)).join('');
+        }
+
+        function renderDashboard() {
+            const today = '2026-09-26';
+            const todays = state.agendas.filter(a => a.tanggal === today && a.status !== 'BATAL' && a.status !== 'DITOLAK');
+            
+            document.getElementById('dash-stats').innerHTML = `
+                <div class="p-5 rounded-3xl border border-slate-200 shadow-sm bg-white">
+                    <div class="text-[11px] font-bold uppercase text-slate-500 mb-2">Total Agenda Hari Ini</div>
+                    <p class="text-3xl font-black text-slate-900">${todays.length}</p>
+                </div>
+                <div class="p-5 rounded-3xl border shadow-sm bg-amber-50 border-amber-200">
+                    <div class="text-[11px] font-bold uppercase text-amber-700 mb-2">Menunggu Konfirmasi</div>
+                    <p class="text-3xl font-black text-amber-700">${state.agendas.filter(a=>a.status==='MENUNGGU_KONFIRMASI').length}</p>
+                </div>
+                <div class="p-5 rounded-3xl border shadow-sm bg-emerald-50 border-emerald-200">
+                    <div class="text-[11px] font-bold uppercase text-emerald-700 mb-2">Total Terkonfirmasi</div>
+                    <p class="text-3xl font-black text-emerald-700">${state.agendas.filter(a=>a.status==='TERKONFIRMASI').length}</p>
+                </div>
+                <div class="p-5 rounded-3xl border shadow-sm bg-blue-50 border-blue-200">
+                    <div class="text-[11px] font-bold uppercase text-blue-700 mb-2">Dialihkan / Delegasi</div>
+                    <p class="text-3xl font-black text-blue-700">${state.agendas.filter(a=>a.status==='DIDELEGASIKAN').length}</p>
+                </div>
+            `;
+
+            // Tampilkan tombol registrasi hanya jika punya akses
+            const btnAjukan = document.getElementById('dash-btn-ajukan');
+            if(state.user && ['ADMINISTRATOR', 'PROTOKOL', 'OPD'].includes(state.user.role)) {
+                btnAjukan.classList.remove('hidden');
+            } else {
+                btnAjukan.classList.add('hidden');
+            }
+
+            const pimpinans = ['Bupati', 'Wakil Bupati', 'Sekretaris Daerah'];
+            document.getElementById('dash-timeline').innerHTML = pimpinans.map(pim => {
+                const pimAgendas = todays.filter(a => (a.delegatedTo || a.pimpinan) === pim && (a.status === 'TERKONFIRMASI' || a.status === 'DIDELEGASIKAN'));
+                const pimClass = pim === 'Bupati' ? 'bg-slate-900 text-white' : pim === 'Wakil Bupati' ? 'bg-amber-500 text-slate-900' : 'bg-slate-100 text-slate-800 border border-slate-300';
+                
+                let agendaHtml = pimAgendas.length === 0 ? `<div class="text-center p-6 border border-dashed border-slate-300 rounded-2xl text-sm text-slate-400 bg-slate-50">Kosong.</div>` 
+                : pimAgendas.map(a => `
+                    <div onclick="openDetail('${a.id}')" class="p-4 border border-slate-200 rounded-2xl hover:border-amber-400 hover:shadow-md cursor-pointer bg-white text-left mb-3 transition group">
+                        <p class="text-[11px] font-black text-emerald-600 mb-1 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ${a.jamMulai} - ${a.jamSelesai}</p>
+                        <p class="text-sm font-bold leading-tight mt-1 group-hover:text-amber-600 transition-colors">${a.kegiatan}</p>
+                        <p class="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> <span class="truncate">${a.lokasi}</span></p>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="space-y-4">
+                        <div class="p-3 rounded-2xl text-center font-bold text-sm shadow-sm ${pimClass}">${pim}</div>
+                        <div>${agendaHtml}</div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderDatabase(mode = 'database') {
+            const search = document.getElementById('db-search').value.toLowerCase();
+            const isVerif = state.view === 'verifikasi';
+            
+            if(isVerif) {
+                document.getElementById('db-title').innerText = 'Verifikasi Global (Admin)';
+                document.getElementById('db-desc').innerText = 'Daftar semua agenda yang menunggu konfirmasi (Panel Admin/Protokol).';
+                document.getElementById('db-controls').classList.add('hidden');
+            } else {
+                document.getElementById('db-title').innerText = 'Database Keseluruhan';
+                document.getElementById('db-desc').innerText = 'Arsip dan histori seluruh data agenda pimpinan.';
+                document.getElementById('db-controls').classList.remove('hidden');
+            }
+
+            const filtered = state.agendas.filter(a => {
+                if(isVerif) return a.status === 'MENUNGGU_KONFIRMASI';
+                return a.kegiatan.toLowerCase().includes(search) || a.pengundang.toLowerCase().includes(search) || a.id.toLowerCase().includes(search);
+            });
+
+            document.getElementById('db-tbody').innerHTML = filtered.length === 0 ? `<tr><td colspan="5" class="p-12 text-center text-slate-500 font-medium">Tidak ada data yang ditemukan.</td></tr>` : filtered.map(item => `
+                <tr class="hover:bg-amber-50 transition-colors group">
+                    <td class="p-5 align-top">
+                        <div class="font-mono font-bold text-amber-600 text-xs bg-amber-100 inline-block px-2 py-1 rounded-md mb-1 border border-amber-200">${item.id}</div>
+                        <div class="text-slate-600 font-medium text-xs flex items-center gap-1 mt-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${item.tanggal}</div>
+                        <div class="text-slate-500 text-[11px] mt-0.5">${item.jamMulai} - ${item.jamSelesai}</div>
+                    </td>
+                    <td class="p-5 max-w-xs md:max-w-md align-top">
+                        <div class="font-bold text-slate-900 leading-snug mb-1 group-hover:text-amber-700 transition-colors">${item.kegiatan}</div>
+                        <div class="text-xs text-slate-500 flex items-center gap-1"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> ${item.pengundang}</div>
+                    </td>
+                    <td class="p-5 font-bold text-slate-800 align-top">
+                        ${item.delegatedTo ? `
+                            <span class="text-blue-700 flex items-center gap-1.5"><i data-lucide="arrow-right-circle" class="w-4 h-4"></i> ${item.delegatedTo}</span>
+                            <div class="text-[10px] font-normal text-slate-500 mt-1.5 bg-slate-100 p-1.5 rounded-lg border border-slate-200 inline-block">Asal: ${item.pimpinan}</div>
+                        ` : `<span class="flex items-center gap-1.5"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i> ${item.pimpinan}</span>`}
+                    </td>
+                    <td class="p-5 align-top">
+                        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm border ${
+                            item.status === 'TERKONFIRMASI' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                            item.status === 'DIDELEGASIKAN' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                            'bg-amber-100 text-amber-800 border-amber-300'}">
+                            ${item.status.replace(/_/g, ' ')}
+                        </span>
+                    </td>
+                    <td class="p-5 text-center align-top">
+                        <div class="flex justify-center gap-2">
+                            ${isVerif ? `
+                                <button onclick="handleVerify('${item.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-xl shadow-md transition" title="Konfirmasi Hadir (Bypass)"><i data-lucide="check-circle" class="w-4 h-4"></i></button>
+                                <button onclick="openDelegate('${item.id}')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl shadow-md transition" title="Delegasikan"><i data-lucide="share-2" class="w-4 h-4"></i></button>
+                            ` : ''}
+                            <button onclick="openDetail('${item.id}')" class="bg-white hover:bg-slate-100 text-slate-700 p-2 rounded-xl border border-slate-300 shadow-sm transition" title="Lihat Detail"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderExecPortal() {
+            if(!state.user || !['BUPATI', 'WAKIL_BUPATI', 'SEKDA'].includes(state.user.role)) return;
+            
+            document.getElementById('exec-name').innerText = state.user.name;
+            document.getElementById('exec-role').innerText = state.user.roleName;
+            document.getElementById('exec-avatar-text').innerText = state.user.name.charAt(0).toUpperCase();
+            
+            const pimName = state.user.roleName.replace('Mamuju Tengah', '').trim();
+            
+            // 1. INBOX: Menunggu Konfirmasi
+            const pendingAgendas = state.agendas.filter(a => a.pimpinan === pimName && a.status === 'MENUNGGU_KONFIRMASI');
+            const pendingList = document.getElementById('exec-pending-list');
+            
+            if(pendingAgendas.length === 0) {
+                pendingList.innerHTML = `<div class="p-8 text-center text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-3xl font-medium">Bagus! Tidak ada permohonan baru yang menunggu konfirmasi Anda.</div>`;
+            } else {
+                pendingList.innerHTML = pendingAgendas.map(a => `
+                    <div class="bg-amber-50 p-5 sm:p-6 rounded-3xl border border-amber-200 shadow-sm transition hover:shadow-md">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
+                            <span class="bg-amber-500 text-slate-900 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider w-max">Permohonan Baru</span>
+                            <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-md border border-amber-200 w-max"><i data-lucide="calendar" class="w-3 h-3 inline"></i> ${a.tanggal} | ${a.jamMulai}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-lg leading-snug mb-2">${a.kegiatan}</h4>
+                        <div class="text-sm text-slate-600 mb-5 space-y-1">
+                            <p class="flex items-start gap-2"><i data-lucide="building-2" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i> <span>${a.pengundang}</span></p>
+                            <p class="flex items-start gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i> <span>${a.lokasi}</span></p>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-amber-200">
+                            <button onclick="handleVerify('${a.id}')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl text-sm shadow transition flex items-center justify-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i> Konfirmasi Hadir
+                            </button>
+                            <button onclick="openDelegate('${a.id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm shadow transition flex items-center justify-center gap-2">
+                                <i data-lucide="share-2" class="w-4 h-4"></i> Delegasikan
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 2. Jadwal Hari Ini
+            const myAgendas = state.agendas.filter(a => (a.delegatedTo || a.pimpinan) === pimName && a.tanggal === '2026-09-26' && (a.status === 'TERKONFIRMASI' || a.status === 'DIDELEGASIKAN'));
+            const agendaList = document.getElementById('exec-agenda-list');
+
+            if(myAgendas.length === 0) {
+                agendaList.innerHTML = `<div class="col-span-full p-10 text-center text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-3xl font-medium">Bapak/Ibu tidak memiliki jadwal yang terkonfirmasi hari ini.</div>`;
+            } else {
+                agendaList.innerHTML = myAgendas.map(a => `
+                    <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-emerald-300 transition group relative overflow-hidden">
+                        ${a.status === 'DIDELEGASIKAN' ? '<div class="absolute top-0 right-0 bg-blue-500 text-white text-[9px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Tugas Delegasi</div>' : ''}
+                        <div class="text-xs font-black text-emerald-600 mb-3 bg-emerald-100 inline-block px-3 py-1 rounded-full border border-emerald-200">
+                            <i data-lucide="clock" class="w-3.5 h-3.5 inline mb-0.5"></i> ${a.jamMulai} - ${a.jamSelesai}
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-base leading-snug mb-2 group-hover:text-emerald-700 transition">${a.kegiatan}</h4>
+                        <div class="text-xs text-slate-500 space-y-1.5 pt-3 border-t border-slate-200">
+                            <p class="truncate"><i data-lucide="map-pin" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i> ${a.lokasi}</p>
+                            <p class="truncate"><i data-lucide="building-2" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i> ${a.pengundang}</p>
+                        </div>
+                        <button onclick="openDetail('${a.id}')" class="w-full mt-4 bg-white text-slate-700 font-bold py-2 rounded-xl border border-slate-300 hover:bg-slate-100 transition text-xs shadow-sm">Detail</button>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function renderCalendar() {
+            const filterPim = document.getElementById('cal-filter').value;
+            let gridHtml = '';
+            
+            for(let i=1; i<=30; i++) {
+                const day = i < 10 ? '0'+i : i;
+                const dateStr = `2026-09-${day}`;
+                const isToday = i === 26;
+                
+                // Di Kalender, tampilkan HANYA yang sudah dikonfirmasi/delegasi
+                const dayAgendas = state.agendas.filter(a => a.tanggal === dateStr && (a.status === 'TERKONFIRMASI' || a.status === 'DIDELEGASIKAN') && (filterPim === 'ALL' || (a.delegatedTo || a.pimpinan) === filterPim));
+                
+                let agendaHtml = dayAgendas.map(a => {
+                    const bg = (a.delegatedTo || a.pimpinan) === 'Bupati' ? 'bg-slate-800 text-white border-slate-900' : (a.delegatedTo || a.pimpinan) === 'Wakil Bupati' ? 'bg-amber-500 text-slate-900 border-amber-600' : 'bg-slate-200 text-slate-800 border-slate-300';
+                    return `<div onclick="openDetail('${a.id}')" class="text-[10px] p-1.5 rounded-lg border cursor-pointer truncate font-bold shadow-sm mb-1.5 hover:opacity-80 transition ${bg}">${a.jamMulai} ${a.kegiatan}</div>`;
+                }).join('');
+
+                gridHtml += `
+                    <div class="min-h-[120px] border p-2.5 rounded-2xl transition ${isToday ? 'bg-amber-50/50 border-amber-300 shadow-inner' : 'bg-slate-50 border-slate-200 hover:bg-white'}">
+                        <div class="text-sm font-black mb-2 ${isToday ? 'text-amber-600' : 'text-slate-400'}">${i}</div>
+                        <div class="space-y-1">${agendaHtml}</div>
+                    </div>
+                `;
+            }
+            document.getElementById('cal-grid').innerHTML = gridHtml;
+        }
+
+        function submitPermohonan(e) {
+            e.preventDefault();
+            const id = `AGD-2026-0${Math.floor(100 + Math.random() * 900)}`;
+            const pimpinanTujuan = document.getElementById('f_pimpinan').value;
+            
+            const newAgenda = {
+                id,
+                nomorSurat: document.getElementById('f_nomor').value,
+                tanggalSurat: document.getElementById('f_tanggal').value, 
+                pengundang: document.getElementById('f_pengundang').value,
+                kegiatan: document.getElementById('f_kegiatan').value,
+                tanggal: document.getElementById('f_tanggal').value,
+                jamMulai: document.getElementById('f_mulai').value,
+                jamSelesai: document.getElementById('f_selesai').value,
+                lokasi: document.getElementById('f_lokasi').value,
+                pimpinan: pimpinanTujuan,
+                cp: document.getElementById('f_cp').value,
+                status: "MENUNGGU_KONFIRMASI",
+                delegatedTo: null,
+                alasanDelegasi: "",
+                riwayat: [{ waktu: new Date().toISOString().replace('T', ' ').substring(0, 16), pesan: `Permohonan diajukan, diteruskan ke Inbox ${pimpinanTujuan} untuk konfirmasi.` }]
+            };
+            
+            state.agendas.unshift(newAgenda);
+            saveAgendas();
+            showToast(`Permohonan Terkirim ke Inbox ${pimpinanTujuan}! ID: ${id}`);
+            document.getElementById('form-permohonan').reset();
+            
+            document.getElementById('track-input').value = id;
+            navigateTo('tracking');
+            doTrack();
+        }
+
+        function doTrack() {
+            const val = document.getElementById('track-input').value.trim().toUpperCase();
+            if(!val) return;
+
+            const agenda = state.agendas.find(a => a.id.toUpperCase() === val);
+            const res = document.getElementById('track-result');
+            
+            if(!agenda) {
+                res.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 p-8 rounded-3xl text-center shadow-inner">
+                        <i data-lucide="search-X" class="w-12 h-12 text-red-300 mx-auto mb-3"></i>
+                        <h4 class="text-red-700 font-bold text-lg mb-1">Data Tidak Ditemukan</h4>
+                        <p class="text-slate-500 text-sm">Pastikan Reg ID yang dimasukkan benar (Format: AGD-XXXX-XXXX).</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            res.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-10 shadow-xl space-y-8 animate-fadeIn">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-6 gap-4">
+                        <div>
+                            <p class="text-[11px] uppercase font-bold text-slate-400 tracking-widest mb-1">Nomor Registrasi</p>
+                            <p class="text-3xl font-black font-mono text-amber-600">${agenda.id}</p>
+                        </div>
+                        <span class="px-5 py-2.5 rounded-full text-sm font-black shadow-sm border ${agenda.status === 'TERKONFIRMASI' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : agenda.status === 'DIDELEGASIKAN' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-100 text-amber-800 border-amber-300'}">
+                            STATUS: ${agenda.status.replace(/_/g, ' ')}
+                        </span>
+                    </div>
+                    
+                    <div class="text-sm space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-200 pb-4">
+                            <div class="sm:col-span-2">
+                                <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Nama Kegiatan</p>
+                                <p class="font-bold text-slate-900 text-base">${agenda.kegiatan}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Tanggal & Waktu</p>
+                                <p class="font-bold text-slate-800">${agenda.tanggal} <br> ${agenda.jamMulai} - ${agenda.jamSelesai}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Pimpinan Tujuan Utama</p>
+                                <p class="font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i> ${agenda.pimpinan}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Lokasi</p>
+                                <p class="font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> ${agenda.lokasi}</p>
+                            </div>
+                        </div>
+
+                        ${agenda.delegatedTo ? `
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 mt-4">
+                            <p class="text-blue-800 font-bold text-sm mb-1 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> Keputusan Pimpinan (Delegasi)</p>
+                            <p class="text-blue-700 text-xs">Agenda ini didelegasikan untuk dihadiri oleh <strong>${agenda.delegatedTo}</strong>. <br>Catatan: ${agenda.alasanDelegasi || '-'}</p>
+                        </div>` : ''}
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-sm mb-4 text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2"><i data-lucide="history" class="w-4 h-4"></i> Riwayat Proses:</h4>
+                        <div class="space-y-4 border-l-2 border-slate-200 ml-2 pl-5 relative">
+                            ${agenda.riwayat.map((r, index) => `
+                                <div class="relative text-sm">
+                                    <div class="absolute -left-[27px] top-1 w-3 h-3 ${index === agenda.riwayat.length -1 ? 'bg-amber-500 ring-amber-100' : 'bg-slate-300 ring-slate-100'} rounded-full ring-4"></div>
+                                    <p class="font-bold text-slate-800">${r.pesan}</p>
+                                    <p class="text-xs text-slate-500 font-mono mt-0.5">${r.waktu}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function openDetail(id) {
+            const a = state.agendas.find(x => x.id === id);
+            if(!a) return;
+            
+            document.getElementById('dtl-id').innerText = a.id;
+            document.getElementById('dtl-kegiatan').innerText = a.kegiatan;
+            document.getElementById('dtl-content').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 mb-2">
+                    <div>
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase">Tanggal</span>
+                        <span class="font-semibold text-slate-900">${a.tanggal}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase">Waktu</span>
+                        <span class="font-semibold text-slate-900">${a.jamMulai} - ${a.jamSelesai} WITA</span>
+                    </div>
+                </div>
+                <div class="border-t border-slate-200 pt-3 mb-2">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase">Lokasi</span>
+                    <span class="font-semibold text-slate-900">${a.lokasi}</span>
+                </div>
+                <div class="border-t border-slate-200 pt-3 mb-2">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase">Instansi Pengundang</span>
+                    <span class="font-semibold text-slate-900">${a.pengundang}</span>
+                </div>
+                <div class="border-t border-slate-200 pt-3 mb-2 flex justify-between items-center">
+                    <div>
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase">Status</span>
+                        <span class="font-black text-amber-600 text-[11px] bg-amber-100 px-2 py-0.5 rounded">${a.status.replace(/_/g, ' ')}</span>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 p-3 rounded-xl mt-4">
+                    <span class="block text-[10px] font-bold text-blue-500 uppercase mb-1">Kehadiran (Keputusan)</span>
+                    <span class="font-black text-blue-800 text-base">${a.delegatedTo ? `Didelegasikan ke ${a.delegatedTo}` : a.pimpinan}</span>
+                </div>
+            `;
+            document.getElementById('btn-wa').onclick = () => generateWA(a);
+            document.getElementById('modal-detail').classList.add('active');
+        }
+
+        function handleVerify(id) {
+            const a = state.agendas.find(x => x.id === id);
+            const isOwner = state.user && state.user.roleName.includes(a.pimpinan);
+            const logMsg = isOwner ? `Dikonfirmasi hadir oleh ${a.pimpinan}.` : `Dikonfirmasi hadir (oleh Administrator/Protokol).`;
+            
+            updateAgenda(id, 'TERKONFIRMASI', logMsg);
+            showToast(`Kehadiran untuk agenda "${a.kegiatan}" berhasil dikonfirmasi.`);
+            
+            if(state.view === 'exec') renderExecPortal();
+            if(state.view === 'database' || state.view === 'verifikasi') renderDatabase(state.view);
+            updateNav();
+        }
+
+        function openDelegate(id) {
+            state.selectedAgenda = state.agendas.find(x => x.id === id);
+            document.getElementById('modal-delegate').classList.add('active');
+        }
+
+        function executeDelegation() {
+            const target = document.getElementById('del-target').value;
+            const reason = document.getElementById('del-reason').value;
+            const a = state.selectedAgenda;
+            
+            const isOwner = state.user && state.user.roleName.includes(a.pimpinan);
+            const who = isOwner ? a.pimpinan : 'Administrator/Protokol';
+            const logMsg = `Tugas didelegasikan oleh ${who} kepada ${target}. Catatan: ${reason || '-'}`;
+            
+            updateAgenda(a.id, 'DIDELEGASIKAN', logMsg, { delegatedTo: target, alasanDelegasi: reason });
+            closeModal('modal-delegate');
+            showToast(`Tugas berhasil didelegasikan ke ${target}.`);
+            
+            if(state.view === 'exec') renderExecPortal();
+            if(state.view === 'database' || state.view === 'verifikasi') renderDatabase(state.view);
+            updateNav();
+        }
+
+        function updateAgenda(id, status, logMsg, extra = {}) {
+            const idx = state.agendas.findIndex(a => a.id === id);
+            if(idx > -1) {
+                state.agendas[idx] = {
+                    ...state.agendas[idx],
+                    ...extra,
+                    status,
+                    riwayat: [...state.agendas[idx].riwayat, { waktu: new Date().toISOString().replace('T',' ').substring(0,16), pesan: logMsg }]
+                };
+                saveAgendas();
+            }
+        }
+
+        function generateWA(a) {
+            const num = a.cp.replace(/[^0-9]/g, '');
+            const cleanNum = num.startsWith('0') ? '62' + num.substring(1) : num;
+            const waText = `Yth. Instansi Pengundang (${a.pengundang}),\n\nKami mengonfirmasi status Permohonan Agenda Pimpinan:\n\n*Kegiatan:* ${a.kegiatan}\n*Tanggal:* ${a.tanggal}\n*Pimpinan Tujuan:* ${a.pimpinan}\n\n*STATUS:* ${a.status.replace(/_/g, ' ')}\n${a.delegatedTo ? `*Kehadiran:* Didelegasikan kepada ${a.delegatedTo}` : ''}\n\nTerima kasih.`;
+            window.open(`https://wa.me/${cleanNum}?text=${encodeURIComponent(waText)}`, '_blank');
+        }
+
+        function openPrintModal() {
+            const date = '2026-09-26';
+            document.getElementById('print-date').innerText = "26 September 2026";
+            
+            const toPrint = state.agendas.filter(a => a.tanggal === date && (a.status === 'TERKONFIRMASI' || a.status === 'DIDELEGASIKAN')).sort((a,b) => a.jamMulai.localeCompare(b.jamMulai));
+            
+            document.getElementById('print-tbody').innerHTML = toPrint.length === 0 ? `<tr><td colspan="5" class="border border-black p-4 text-center">Nihil agenda terkonfirmasi untuk hari ini.</td></tr>` : toPrint.map((a, i) => `
+                <tr>
+                    <td class="border border-black p-3 text-center align-top">${i+1}</td>
+                    <td class="border border-black p-3 text-center font-mono align-top font-bold">${a.jamMulai} - ${a.jamSelesai}</td>
+                    <td class="border border-black p-3 align-top">
+                        <strong class="text-sm">${a.kegiatan}</strong>
+                        <div class="text-xs mt-1">Penyelenggara: ${a.pengundang}</div>
+                        <div class="text-xs mt-0.5">Lokasi: ${a.lokasi}</div>
+                    </td>
+                    <td class="border border-black p-3 font-bold align-top text-center text-sm">${a.delegatedTo ? `<span class="italic text-xs block font-normal text-gray-600">Delegasi ke:</span> ${a.delegatedTo}` : a.pimpinan}</td>
+                    <td class="border border-black p-3 text-[11px] align-top text-center">
+                        <span class="uppercase font-bold">${a.status.replace(/_/g, ' ')}</span>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('printModal').classList.add('active');
+        }
+
+        window.onload = () => {
+            initApp();
+            navigateTo('landing');
+        };
+    </script>
+</body>
+</html>
